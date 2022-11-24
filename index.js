@@ -13,7 +13,8 @@ app.get((req, res) => {
   res.send("laptop server is running");
 });
 
-const uri = `mongodb+srv://${process.env.UB_USER}:${process.env.DB_PASSWORD}@cluster0.wwiuorc.mongodb.net/?retryWrites=true&w=majority`;
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.wwiuorc.mongodb.net/?retryWrites=true&w=majority`;
+console.log(uri);
 const client = new MongoClient(uri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -22,6 +23,18 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
+    const categoriesCollections = client
+      .db("laptop-sotries")
+      .collection("categories");
+    const productsCollections = client
+      .db("laptop-sotries")
+      .collection("products");
+
+    app.get("/categories", async (req, res) => {
+      const query = {};
+      const result = await categoriesCollections.find(query).toArray();
+      res.send(result);
+    });
   } finally {
   }
 }
