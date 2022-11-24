@@ -29,6 +29,7 @@ async function run() {
     const productsCollections = client
       .db("laptop-sotries")
       .collection("products");
+    const usersCollection = client.db("laptop-sotries").collection("users");
 
     app.get("/categories", async (req, res) => {
       const query = {};
@@ -36,9 +37,10 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/products/:id", async (req, res) => {
+    app.get("/category/:id", async (req, res) => {
       const id = req.params.id;
-      const query = { categoryId: ObjectId(id) };
+      const query = { categoryId: id };
+      console.log(id, query);
       const result = await productsCollections.findOne(query);
       res.send(result);
     });
