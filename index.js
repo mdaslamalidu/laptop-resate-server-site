@@ -31,6 +31,47 @@ async function run() {
       .collection("products");
     const usersCollection = client.db("laptop-sotries").collection("users");
 
+    app.put("/users/:email", async (req, res) => {
+      const email = req.params.email;
+      const user = req.body;
+      const filter = { email: email };
+      const updateOne = { upsert: true };
+      const updatedDoc = {
+        $set: user,
+      };
+      const result = await usersCollection.updateOne(
+        filter,
+        updatedDoc,
+        updateOne
+      );
+      console.log(result);
+
+      // const token = jwt.sign(user, process.env.ACCESS_TOKEN, {
+      //   expiresIn: "1d",
+      // });
+
+      // res.send({ result, token });
+    });
+
+    app.post("/users", async (req, res) => {
+      const query = req.body;
+      const result = await usersCollection.insertOne(query);
+      res.send(result);
+    });
+
+    app.get("/users", async (req, res) => {
+      let query = {};
+      const result = await usersCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    app.get("/users/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      res.send(user);
+    });
+
     app.get("/categories", async (req, res) => {
       const query = {};
       const result = await categoriesCollections.find(query).toArray();
