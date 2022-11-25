@@ -15,7 +15,6 @@ app.get((req, res) => {
 });
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.wwiuorc.mongodb.net/?retryWrites=true&w=majority`;
-console.log(uri);
 const client = new MongoClient(uri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -51,27 +50,27 @@ async function run() {
       .db("laptop-sotries")
       .collection("bookings");
 
-    app.put("/users/:email", async (req, res) => {
-      const email = req.params.email;
-      const user = req.body;
-      const filter = { email: email };
-      const updateOne = { upsert: true };
-      const updatedDoc = {
-        $set: user,
-      };
-      const result = await usersCollection.updateOne(
-        filter,
-        updatedDoc,
-        updateOne
-      );
-      console.log(result);
+    // app.put("/users/:email", async (req, res) => {
+    //   const email = req.params.email;
+    //   const user = req.body;
+    //   const filter = { email: email };
+    //   const updateOne = { upsert: true };
+    //   const updatedDoc = {
+    //     $set: user,
+    //   };
+    //   const result = await usersCollection.updateOne(
+    //     filter,
+    //     updatedDoc,
+    //     updateOne
+    //   );
+    //   console.log(result);
 
-      // const token = jwt.sign(user, process.env.ACCESS_TOKEN, {
-      //   expiresIn: "1d",
-      // });
+    //   // const token = jwt.sign(user, process.env.ACCESS_TOKEN, {
+    //   //   expiresIn: "1d",
+    //   // });
 
-      // res.send({ result, token });
-    });
+    //   // res.send({ result, token });
+    // });
 
     app.post("/users", async (req, res) => {
       const query = req.body;
@@ -131,6 +130,18 @@ async function run() {
     app.post("/product", async (req, res) => {
       const query = req.body;
       const result = await productsCollections.insertOne(query);
+      res.send(result);
+    });
+
+    app.get("/products", veryJwt, async (req, res) => {
+      const email = req.query.email;
+      const decodedEmail = req.decoded.email;
+      if (email !== decodedEmail) {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+
+      const query = { email: decodedEmail };
+      const result = await productsCollections.find(query).toArray();
       res.send(result);
     });
 
