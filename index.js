@@ -30,6 +30,9 @@ async function run() {
       .db("laptop-sotries")
       .collection("products");
     const usersCollection = client.db("laptop-sotries").collection("users");
+    const bookingCollection = client
+      .db("laptop-sotries")
+      .collection("bookings");
 
     app.put("/users/:email", async (req, res) => {
       const email = req.params.email;
@@ -81,8 +84,14 @@ async function run() {
     app.get("/category/:id", async (req, res) => {
       const id = req.params.id;
       const query = { categoryId: id };
-      console.log(id, query);
-      const result = await productsCollections.findOne(query);
+      const result = await productsCollections.find(query).toArray();
+      res.send(result);
+    });
+
+    // insert all bookings
+    app.post("/bookings", async (req, res) => {
+      const query = req.body;
+      const result = await bookingCollection.insertOne(query);
       res.send(result);
     });
   } finally {
