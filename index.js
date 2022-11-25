@@ -94,6 +94,13 @@ async function run() {
       const result = await bookingCollection.insertOne(query);
       res.send(result);
     });
+
+    //add product
+    app.post("/product", async (req, res) => {
+      const query = req.body;
+      const result = await productsCollections.insertOne(query);
+      res.send(result);
+    });
   } finally {
   }
 }
