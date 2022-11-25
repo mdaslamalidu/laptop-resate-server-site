@@ -3,6 +3,7 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 const port = process.env.PORT || 5000;
+const jwt = require("jsonwebtoken");
 
 const app = express();
 
@@ -91,6 +92,21 @@ async function run() {
     // insert all bookings
     app.post("/bookings", async (req, res) => {
       const query = req.body;
+      const id = query.category_id;
+      const myProduct = { _id: ObjectId(id) };
+      const update = { upsert: true };
+      const updateDoc = {
+        $set: {
+          status: "sold",
+        },
+      };
+      const data = await productsCollections.updateOne(
+        myProduct,
+        updateDoc,
+        update
+      );
+      console.log(data);
+
       const result = await bookingCollection.insertOne(query);
       res.send(result);
     });
@@ -100,6 +116,19 @@ async function run() {
       const query = req.body;
       const result = await productsCollections.insertOne(query);
       res.send(result);
+    });
+
+    app.get("/jwt", async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      if (user) {
+        const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, {
+          expiresIn: "1h",
+        });
+        return res.send({ accessToken: token });
+      }
+      return res.status(403).send({ accesToken: "" });
     });
   } finally {
   }
