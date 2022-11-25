@@ -22,6 +22,22 @@ const client = new MongoClient(uri, {
   serverApi: ServerApiVersion.v1,
 });
 
+function veryJwt(req, res, next) {
+  const authHeader = req.headers.authorizations;
+  if (!authHeader) {
+    return res.status(401).send("unauthorization access");
+  }
+
+  const token = authHeader.split(" ")[1];
+  jwt.verify(token, process.env.ACCESS_TOKEN, function (err, decoded) {
+    if (err) {
+      return res.status(403).send({ message: "forbidden access" });
+    }
+    req.decoded = decoded;
+    next();
+  });
+}
+
 async function run() {
   try {
     const categoriesCollections = client
