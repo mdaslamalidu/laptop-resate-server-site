@@ -49,6 +49,9 @@ async function run() {
     const bookingCollection = client
       .db("laptop-sotries")
       .collection("bookings");
+    const advertiseCollection = client
+      .db("laptop-sotries")
+      .collection("advertise");
 
     // app.put("/users/:email", async (req, res) => {
     //   const email = req.params.email;
@@ -156,6 +159,12 @@ async function run() {
         return res.send({ accessToken: token });
       }
       return res.status(403).send({ accesToken: "" });
+    });
+
+    app.post("/advertise", async (req, res) => {
+      const query = req.body;
+      const result = await advertiseCollection.insertOne(query);
+      res.send(result);
     });
   } finally {
   }
