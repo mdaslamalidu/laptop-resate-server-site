@@ -112,6 +112,10 @@ async function run() {
       const query = req.body;
       const id = query.category_id;
       const myProduct = { _id: ObjectId(id) };
+      const advertisedId = { advertiseId: id };
+      console.log(advertisedId, id);
+      const deleteItem = await advertiseCollection.deleteOne(advertisedId);
+      console.log(deleteItem);
       const update = { upsert: true };
       const updateDoc = {
         $set: {
@@ -164,6 +168,12 @@ async function run() {
     app.post("/advertise", async (req, res) => {
       const query = req.body;
       const result = await advertiseCollection.insertOne(query);
+      res.send(result);
+    });
+
+    app.get("/advertise", async (req, res) => {
+      const query = {};
+      const result = await advertiseCollection.find(query).toArray();
       res.send(result);
     });
   } finally {
