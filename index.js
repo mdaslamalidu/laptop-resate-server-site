@@ -66,8 +66,19 @@ async function run() {
         updatedDoc,
         updateOne
       );
-      console.log(result);
-      res.send(result)
+
+      const updatedVarified = {
+        $set: { verifiedStatus: "verified" },
+      };
+
+      const verifySeller = await productsCollections.updateOne(
+        filter,
+        updatedVarified,
+        updateOne
+      );
+
+      console.log(result, verifySeller);
+      res.send(result);
     });
 
     app.post("/users", async (req, res) => {
