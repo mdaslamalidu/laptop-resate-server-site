@@ -4,6 +4,7 @@ const cors = require("cors");
 require("dotenv").config();
 const port = process.env.PORT || 5000;
 const jwt = require("jsonwebtoken");
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 const app = express();
 
@@ -52,6 +53,12 @@ async function run() {
     const advertiseCollection = client
       .db("laptop-sotries")
       .collection("advertise");
+    const reportedCollection = client
+      .db("laptop-sotries")
+      .collection("reportedItems");
+    const paymentCollection = client
+      .db("laptop-sotries")
+      .collection("payments");
 
     app.put("/users/:email", async (req, res) => {
       const email = req.params.email;
@@ -81,6 +88,73 @@ async function run() {
       res.send(result);
     });
 
+    app.post("/create-payment-intent", async (req, res) => {
+      const bookings = req.body;
+      const price = bookings.categoryPrice;
+      const amount = price * 100;
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: "usd",
+        payment_method_types: ["card"],
+      });
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    });
+
+    app.post("/payments", async (req, res) => {
+      const query = req.body;
+      const id = query.bookingId;
+      const filter = { _id: ObjectId(id) };
+      const updated = { upsert: true };
+      const updateDoc = {
+        $set: {
+          paid: true,
+          transactionId: query.transactionId,
+        },
+      };
+      const result = await paymentCollection.insertOne(query);
+      const updateData = await bookingCollection.updateOne(
+        filter,
+        updateDoc,
+        updated
+      );
+      console.log(updateData);
+      res.send(result);
+    });
+
+    app.post("/report", async (req, res) => {
+      const query = req.body;
+      const result = await reportedCollection.insertOne(query);
+      console.log(result);
+      res.send(result);
+    });
+
+    app.get("/report", async (req, res) => {
+      const query = {};
+      const result = await reportedCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    app.get("/orders", async (req, res) => {
+      const query = req.query.email;
+      const filter = { email: query };
+      const result = await bookingCollection.find(filter).toArray();
+      console.log(result);
+      res.send(result);
+    });
+
+    app.delete("/report/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { reportId: id };
+      const filter = { _id: ObjectId(id) };
+      const result = await reportedCollection.deleteOne(query);
+      const data = await productsCollections.deleteOne(filter);
+      console.log(result, data);
+      res.send(result);
+    });
+
     app.post("/users", async (req, res) => {
       const query = req.body;
       const result = await usersCollection.insertOne(query);
@@ -106,6 +180,14 @@ async function run() {
       const result = await usersCollection.deleteOne(filter);
       console.log(result);
       res.send(result);
+    });
+
+    app.get("/users/role/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      console.log(user === null);
+      res.send({ role: user === "null" ? "false" : user });
     });
 
     app.get("/categories", async (req, res) => {
@@ -144,6 +226,13 @@ async function run() {
       console.log(data);
 
       const result = await bookingCollection.insertOne(query);
+      res.send(result);
+    });
+
+    app.get("/bookings/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await bookingCollection.findOne(query);
       res.send(result);
     });
 
