@@ -137,11 +137,14 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/orders", async (req, res) => {
-      const query = req.query.email;
-      const filter = { email: query };
+    app.get("/orders", veryJwt, async (req, res) => {
+      const email = req.query.email;
+      const decodedEmail = req.decoded.email;
+      if (email !== decodedEmail) {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+      const filter = { email: email };
       const result = await bookingCollection.find(filter).toArray();
-      console.log(result);
       res.send(result);
     });
 
@@ -204,10 +207,31 @@ async function run() {
     });
 
     // insert all bookings
-    app.post("/bookings", async (req, res) => {
+    app.post("/bookings", veryJwt, async (req, res) => {
       const query = req.body;
+      const email = query.email;
       const id = query.category_id;
-      const myProduct = { _id: ObjectId(id) };
+      const bookingId = { category_id: query.category_id };
+      const productId = { _id: ObjectId(id) };
+      const decodedEmail = req.decoded.email;
+      if (email !== decodedEmail) {
+        const message = "please login and verify your account";
+        return res.send({
+          acknowledged: false,
+          message,
+        });
+      }
+
+      const alreadyBooked = await bookingCollection.find(bookingId).toArray();
+
+      if (alreadyBooked.length) {
+        const message = "you have already booked  this product";
+        return res.send({
+          acknowledged: false,
+          message,
+        });
+      }
+
       const advertisedId = { advertiseId: id };
       console.log(advertisedId, id);
       const deleteItem = await advertiseCollection.deleteOne(advertisedId);
@@ -219,7 +243,7 @@ async function run() {
         },
       };
       const data = await productsCollections.updateOne(
-        myProduct,
+        productId,
         updateDoc,
         update
       );
@@ -274,9 +298,16 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/advertise", async (req, res) => {
+    app.get("/advertise", veryJwt, async (req, res) => {
+      const email = req.query.email;
+      const decodedEmail = req.decoded.email;
+      console.log(email, decodedEmail);
+      if (email !== decodedEmail) {
+        return res.status(403).send({ message: "forbidden access" });
+      }
       const query = {};
       const result = await advertiseCollection.find(query).toArray();
+      console.log(result);
       res.send(result);
     });
   } finally {
