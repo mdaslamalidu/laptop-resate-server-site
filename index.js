@@ -11,7 +11,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.get((req, res) => {
+app.get("/", (req, res) => {
   res.send("laptop server is running");
 });
 
@@ -106,6 +106,7 @@ async function run() {
     app.post("/payments", async (req, res) => {
       const query = req.body;
       const id = query.bookingId;
+      const productId = { _id: ObjectId(query.productId) };
       const filter = { _id: ObjectId(id) };
       const updated = { upsert: true };
       const updateDoc = {
@@ -114,13 +115,18 @@ async function run() {
           transactionId: query.transactionId,
         },
       };
+      const updateProduct = await productsCollections.updateOne(
+        productId,
+        updateDoc,
+        updated
+      );
       const result = await paymentCollection.insertOne(query);
       const updateData = await bookingCollection.updateOne(
         filter,
         updateDoc,
         updated
       );
-      console.log(updateData);
+      console.log(updateData, updateProduct);
       res.send(result);
     });
 
